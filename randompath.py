@@ -18,32 +18,24 @@ def would_hit_boundary(direction, current_position, max_size):
     return would_hit_right or would_hit_bottom or would_hit_left
 
 
-def would_be_illegal_turn(next_direction, directions):
-    if len(directions) < 2:
-        return False
+def is_legal_move(previous_directions, next_direction):
+    if len(previous_directions) < 2:
+        return True
 
     if next_direction == UP:
+        return True
+
+    if previous_directions[-1] == RIGHT and next_direction == LEFT or \
+            previous_directions[-1] == LEFT and next_direction == RIGHT:
         return False
 
-    if directions[-1] == RIGHT and next_direction == LEFT or directions[-1] == LEFT and next_direction == RIGHT:
-        return True
+    if next_direction in [RIGHT, LEFT] and previous_directions[-1] == UP and not previous_directions[-2] == UP:
+        return False
 
-    if next_direction in [RIGHT, LEFT] and directions[-1] == UP and not directions[-2] == UP:
-        return True
-
-    return False
+    return True
 
 
-def get_next_position(current_position, directions, max_size):
-    next_direction = get_next_direction()
-    while would_hit_boundary(next_direction, current_position, max_size) or would_be_illegal_turn(next_direction,
-                                                                                                  directions):
-        logging.info('Illegal turn %s, retry', next_direction)
-        next_direction = get_next_direction()
-
-    logging.debug('next direction: %s', next_direction)
-    directions.append(next_direction)
-
+def compute_next_position(next_direction, current_position):
     if next_direction == UP:
         new_x = current_position.x
         new_y = current_position.y + 1
@@ -62,6 +54,26 @@ def get_next_position(current_position, directions, max_size):
     return Position(new_x, new_y, next_direction)
 
 
+def get_next_position(current_position, previous_positions, directions, max_size):
+    while True:
+        next_direction = get_next_direction()
+        next_position = compute_next_position(next_direction, current_position)
+
+        is_unique = not key(next_position) in previous_positions
+        is_within_boundary = not would_hit_boundary(next_direction, current_position, max_size)
+        is_legal = is_legal_move(directions, next_direction)
+
+        if is_within_boundary and is_unique and is_legal:
+            break
+
+        logging.debug('Illegal turn %s, retry', next_direction)
+
+    logging.debug('next direction: %s', next_direction)
+    directions.append(next_direction)
+
+    return next_position
+
+
 def get_next_direction():
     return random.choices([UP, RIGHT, LEFT], [0.1, 0.5, 0.5])[0]
 
@@ -74,16 +86,17 @@ def compute_random_path(board_size):
     directions = []
     positions = OrderedDict()
     max_size = board_size - 1
+
     current_position = Position(random.randint(0, max_size), 0, 'START')
     positions[key(current_position)] = current_position
 
-    while current_position.y != board_size - 1:
-        next_position = get_next_position(current_position, directions, max_size)
-        while key(next_position) in positions:
-            next_position = get_next_position(current_position, directions, max_size)
-
+    while True:
+        next_position = get_next_position(current_position, positions, directions, max_size)
         positions[key(next_position)] = next_position
         current_position = next_position
+
+        if current_position.y == max_size:
+            break
 
     return positions
 
@@ -101,12 +114,12 @@ if __name__ == '__main__':
     if args.debug:
         logging.basicConfig(level=logging.DEBUG)
 
-    positions = compute_random_path(board_size)
+    path = compute_random_path(board_size)
 
     board = [[' . ' for _ in range(board_size)] for _ in range(board_size)]
 
-    for i, key in enumerate(positions):
-        position = positions[key]
+    for i, key in enumerate(path):
+        position = path[key]
         board[position.y][position.x] = '{:^3}'.format(i)
 
     for line in board:
