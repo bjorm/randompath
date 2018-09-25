@@ -1,19 +1,19 @@
 import unittest
 
-from randompath import UP, RIGHT, LEFT, is_legal_move
+from randompath import Direction, _is_legal_move
 
 
 class IllegalTurnTest(unittest.TestCase):
 
     def test_must_be_illegal(self):
-        self.assertFalse(is_legal_move([LEFT, LEFT], RIGHT))
-        self.assertFalse(is_legal_move([UP, RIGHT], LEFT))
-        self.assertFalse(is_legal_move([UP, LEFT], RIGHT))
+        self.assertFalse(_is_legal_move([Direction.Direction.LEFT, Direction.Direction.LEFT], Direction.Direction.RIGHT))
+        self.assertFalse(_is_legal_move([Direction.UP, Direction.RIGHT], Direction.Direction.LEFT))
+        self.assertFalse(_is_legal_move([Direction.UP, Direction.LEFT], Direction.Direction.RIGHT))
 
     def test_must_be_legal(self):
-        self.assertTrue(is_legal_move([LEFT, LEFT], LEFT))
-        self.assertTrue(is_legal_move([RIGHT, RIGHT], RIGHT))
-        self.assertTrue(is_legal_move([LEFT, UP, UP], LEFT))
-        self.assertTrue(is_legal_move([RIGHT, UP, UP], LEFT))
-        self.assertTrue(is_legal_move([LEFT, UP, UP], RIGHT))
-        self.assertTrue(is_legal_move([UP, UP, UP], UP))
+        self.assertTrue(_is_legal_move([Direction.LEFT, Direction.LEFT], Direction.LEFT))
+        self.assertTrue(_is_legal_move([Direction.RIGHT, Direction.RIGHT], Direction.RIGHT))
+        self.assertTrue(_is_legal_move([Direction.LEFT, Direction.UP, Direction.UP], Direction.LEFT))
+        self.assertTrue(_is_legal_move([Direction.RIGHT, Direction.UP, Direction.UP], Direction.LEFT))
+        self.assertTrue(_is_legal_move([Direction.LEFT, Direction.UP, Direction.UP], Direction.RIGHT))
+        self.assertTrue(_is_legal_move([Direction.UP, Direction.UP, Direction.UP], Direction.UP))

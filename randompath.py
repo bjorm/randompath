@@ -1,51 +1,55 @@
 import random
-from collections import namedtuple, OrderedDict
-
+import enum
 import logging
+from collections import namedtuple, OrderedDict
 
 Position = namedtuple('Position', ['x', 'y', 'direction'])
 
-LEFT = 'LEFT'
-DOWN = 'DOWN'
-RIGHT = 'RIGHT'
-UP = 'UP'
+
+class Direction(enum.Enum):
+    UP = 'UP'
+    DOWN = 'DOWN'
+    RIGHT = 'RIGHT'
+    LEFT = 'LEFT'
 
 
-def would_hit_boundary(direction, current_position, max_size):
-    would_hit_bottom = direction == DOWN and current_position.y == 0
-    would_hit_left = direction == LEFT and current_position.x == 0
-    would_hit_right = direction == RIGHT and current_position.x == max_size
+def _would_hit_boundary(direction, current_position, max_size):
+    would_hit_bottom = direction == Direction.DOWN and current_position.y == 0
+    would_hit_left = direction == Direction.LEFT and current_position.x == 0
+    would_hit_right = direction == Direction.RIGHT and current_position.x == max_size
     return would_hit_right or would_hit_bottom or would_hit_left
 
 
-def is_legal_move(previous_directions, next_direction):
+def _is_legal_move(previous_directions, next_direction):
     if len(previous_directions) < 2:
         return True
 
-    if next_direction == UP:
+    if next_direction == Direction.UP:
         return True
 
-    if previous_directions[-1] == RIGHT and next_direction == LEFT or \
-            previous_directions[-1] == LEFT and next_direction == RIGHT:
+    if previous_directions[-1] == Direction.RIGHT and next_direction == Direction.LEFT or \
+            previous_directions[-1] == Direction.LEFT and next_direction == Direction.RIGHT:
         return False
 
-    if next_direction in [RIGHT, LEFT] and previous_directions[-1] == UP and not previous_directions[-2] == UP:
+    if next_direction in [Direction.RIGHT, Direction.LEFT] and \
+            previous_directions[-1] == Direction.UP and \
+            not previous_directions[-2] == Direction.UP:
         return False
 
     return True
 
 
-def compute_next_position(next_direction, current_position):
-    if next_direction == UP:
+def _compute_next_position(next_direction, current_position):
+    if next_direction == Direction.UP:
         new_x = current_position.x
         new_y = current_position.y + 1
-    elif next_direction == DOWN:
+    elif next_direction == Direction.DOWN:
         new_x = current_position.x
         new_y = current_position.y - 1
-    elif next_direction == LEFT:
+    elif next_direction == Direction.LEFT:
         new_x = current_position.x - 1
         new_y = current_position.y
-    elif next_direction == RIGHT:
+    elif next_direction == Direction.RIGHT:
         new_x = current_position.x + 1
         new_y = current_position.y
     else:
@@ -54,14 +58,14 @@ def compute_next_position(next_direction, current_position):
     return Position(new_x, new_y, next_direction)
 
 
-def get_next_position(current_position, previous_positions, directions, max_size):
+def _get_next_position(current_position, previous_positions, directions, max_size):
     while True:
-        next_direction = get_next_direction()
-        next_position = compute_next_position(next_direction, current_position)
+        next_direction = _get_next_direction()
+        next_position = _compute_next_position(next_direction, current_position)
 
-        is_unique = not key(next_position) in previous_positions
-        is_within_boundary = not would_hit_boundary(next_direction, current_position, max_size)
-        is_legal = is_legal_move(directions, next_direction)
+        is_unique = not _key(next_position) in previous_positions
+        is_within_boundary = not _would_hit_boundary(next_direction, current_position, max_size)
+        is_legal = _is_legal_move(directions, next_direction)
 
         if is_within_boundary and is_unique and is_legal:
             break
@@ -74,11 +78,11 @@ def get_next_position(current_position, previous_positions, directions, max_size
     return next_position
 
 
-def get_next_direction():
-    return random.choices([UP, RIGHT, LEFT], [0.1, 0.5, 0.5])[0]
+def _get_next_direction():
+    return random.choices([Direction.UP, Direction.LEFT, Direction.RIGHT], [0.1, 0.5, 0.5])[0]
 
 
-def key(position):
+def _key(position):
     return position.x, position.y
 
 
@@ -88,11 +92,11 @@ def compute_random_path(board_size):
     max_size = board_size - 1
 
     current_position = Position(random.randint(0, max_size), 0, 'START')
-    positions[key(current_position)] = current_position
+    positions[_key(current_position)] = current_position
 
     while True:
-        next_position = get_next_position(current_position, positions, directions, max_size)
-        positions[key(next_position)] = next_position
+        next_position = _get_next_position(current_position, positions, directions, max_size)
+        positions[_key(next_position)] = next_position
         current_position = next_position
 
         if current_position.y == max_size:
